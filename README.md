@@ -8,7 +8,7 @@ AI를 활용한 바이브 코딩으로 제작되었으며, D&D 5e와 Call of Cth
 
 제작자의 플레이 환경을 기준으로 테스트되었기 때문에, 다른 모듈과의 호환성은 충분히 검증되지 않았습니다.
 
-**이 모듈은 `Custom Theatre System`의 종속 모듈입니다. `Custom Theatre System`이 설치되어 있지 않으면 사용할 수 없습니다.**
+**이 모듈은 `Custom Theatre System`의 종속 모듈입니다. `Custom Theatre System`이 설치되어 있지 않으면 사용할 수 없습니다.** https://github.com/yj9073773-jpg/custom-theatre-system/tree/main
 
 ## 기능 소개
 
