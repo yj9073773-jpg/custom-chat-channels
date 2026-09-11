@@ -19,5 +19,8 @@
     {
       "name": "Dgr1s"
     }
-  ]
+  ],
+  "url": "https://github.com/yj9073773-jpg/custom-chat-channels",
+  "manifest": "https://github.com/yj9073773-jpg/custom-chat-channels/releases/latest/download/module.json",
+  "download": "https://github.com/yj9073773-jpg/custom-chat-channels/releases/download/v0.4.3/custom-chat-channels.zip"
 }
