@@ -1,0 +1,217 @@
+/* Phase 1: 기능 위주 최소 스타일. Phase 2: 오버플로우 페이지 이동/안읽음 표시/글자색 설정 추가. */
+
+.ccc-tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* '+' 버튼이 오른쪽으로 밀려 보이던 문제를 원인 무관하게 확정적으로 좌측 고정 */
+  align-self: stretch; /* 부모(.chat-sidebar)가 flex-direction: column + align-items: flex-end라서
+                           탭바 박스 자체가 통째로 오른쪽에 붙던 문제 수정 — 이 요소만 부모의
+                           align-items 설정을 무시하고 부모 폭에 맞춰 늘어나게 한다 (콘솔로 실측 확인됨). */
+  width: 100%;
+  box-sizing: border-box;
+  gap: 2px;
+  padding: 2px 4px;
+  flex-wrap: nowrap;
+  /* [버그: DND5e 등 일부 시스템/코어 V13 레이어 구조에서 클릭 먹통] 상위 요소(예: 캔버스 위에
+     떠 있는 사이드바 레이어, 또는 시스템이 사이드바에 씌우는 CSS)가 pointer-events: none을
+     내려보내는 경우, 이 프로퍼티는 상속되므로 우리 탭/버튼들도 그대로 클릭이 캔버스로
+     통과해버려 완전히 반응 없는 것처럼 보인다(F12 콘솔로 실측 확인: computed pointer-events
+     가 none, elementFromPoint가 우리 버튼이 아니라 <canvas id="board">를 반환). 탭바 컨테이너
+     에서 명시적으로 auto를 다시 걸어 이 상속을 끊는다. 플레이어에게 보이는 비활성 "+"
+     버튼(.ccc-add.ccc-inert)은 아래에서 더 높은 specificity로 다시 pointer-events: none이
+     걸리므로 기존의 "보이지만 눌리지 않음" 동작은 그대로 유지된다. */
+  pointer-events: auto;
+}
+
+/* [Phase 2] 탭 전체를 감싸며 넘치는 폭만 스크롤하는 뷰포트. 탭바 자체(.ccc-tabbar)는 더 이상
+   overflow:hidden으로 넘치는 탭을 잘라내지 않고, 이 뷰포트가 그 역할을 전담한다.
+   이동은 </> 버튼으로만 하도록 스펙이 확정되어, 스크롤바는 어떤 브라우저 엔진에서도
+   보이지 않게 강하게 억제한다(!important — Foundry 코어/시스템 CSS가 overflow 관련 규칙을
+   더 높은 우선순위로 깔아두는 경우가 있어 일반 규칙만으로는 뚫리지 않을 수 있음). */
+.ccc-tabbar-viewport {
+  flex: 1 1 auto;
+  min-width: 0; /* flex 자식이 내용물 크기만큼 커져서 형제 버튼을 밀어내지 않도록 */
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-behavior: smooth;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* 구형 Edge/IE */
+}
+.ccc-tabbar-viewport::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+.ccc-tabbar-track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  width: max-content;
+}
+
+.ccc-tabbar button {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  line-height: 1.6;
+  width: auto;
+  min-width: 28px;
+  border: none; /* 코어 기본 <button> 테두리(금색)가 주변 아이콘 버튼들과 혼자 튀어 보이던 문제 — 테두리 자체를 없애 통일 */
+  background: transparent; /* 탭 배경은 항상 현재 채팅 카드 배경을 그대로 상속(Phase 2 확정 사항) */
+  color: var(--ccc-tab-font-color, inherit); /* [Phase 2] client scope 글자색 설정 반영, 미설정 시 기본 상속 */
+  outline: none;
+}
+/* [가시성 개선, 예방] custom-theatre-system의 [버그 3]와 동일한 유형의 문제(클릭 후 브라우저
+   기본 포커스 링이 노출되는 것)를 여기서는 미리 막아둔다. .ccc-active 표시는 box-shadow를
+   쓰므로, 여기서는 outline만 지운다 — box-shadow까지 지우면 방금 클릭해 막 .ccc-active가
+   된 탭에서 그 표시가 도리어 사라져버린다. */
+.ccc-tabbar button:focus,
+.ccc-tabbar button:focus-visible {
+  outline: none !important;
+}
+
+/* [Phase 2] 탭(메인+채널) 크기를 "이름 5글자 + 안읽음 * 1글자" = 총 6글자 폭으로 완전히 고정한다.
+   내용 길이와 무관하게 아이콘(탭) 크기가 늘거나 줄지 않도록 하는 것이 스펙 의도이므로,
+   +/</> 버튼과는 별도로 .ccc-tab에만 적용하고 ("+"버튼인 .ccc-add는 제외) px 고정폭을 쓴다
+   (한글/영문 혼용 환경이라 ch 단위 대신 실측 기준 px로 고정). */
+.ccc-tabbar .ccc-tab:not(.ccc-add) {
+  width: 74px;
+  min-width: 74px;
+  max-width: 74px;
+  padding: 2px 0;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--ccc-tab-bg-color, transparent); /* [Phase 2 추가] 오퍼시티 포함 배경색 설정, 미설정 시 기존처럼 상속(투명) */
+}
+
+/* [가시성 개선] 볼드만으로는 눈에 잘 안 띈다는 피드백 — 탭 글자색 설정(--ccc-tab-font-color,
+   client scope)과 연동되는 아웃라인을 추가한다. currentColor를 쓰면 이 탭의 실제 글자색을
+   그대로 따라가므로, 사용자가 글자색을 바꾸면 아웃라인 색도 자동으로 같이 바뀐다. */
+.ccc-tabbar .ccc-tab.ccc-active {
+  font-weight: bold;
+  box-shadow: 0 0 0 1px currentColor inset;
+}
+
+.ccc-tabbar .ccc-tab-label {
+  pointer-events: none; /* 버튼 자체가 클릭 대상이므로 자식 span은 클릭 이벤트를 가로채지 않게 함 */
+}
+
+/* [Phase 2] 안읽음 표시(*). 색상은 unreadIndicatorColor 설정값이 인라인 style로 직접 들어간다. */
+.ccc-tabbar .ccc-unread-dot {
+  margin-right: 2px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* [Phase 2] 오버플로우 페이지 이동 버튼. 기본은 숨김 상태이며 JS가 필요할 때만 보여준다. */
+.ccc-tabbar-nav {
+  flex: 0 0 auto;
+  padding: 2px 4px;
+  min-width: 20px;
+  background: transparent;
+}
+
+/* [Phase 2] "+"(채널 관리) / "‹""›"(페이지 이동) 버튼 가시성 개선.
+ * 탭 버튼들과 생김새가 비슷해 눈에 잘 안 띄던 문제 — 아이콘을 키우고, 코어가 기본으로 주는
+ * 버튼 테두리를 없애 아이콘 자체만 도드라져 보이게 한다(볼드 웨이트는 fa-solid 아이콘 폰트가
+ * 이미 최고 굵기라 더 굵게 만들 수 없어, 크기를 키우는 쪽으로 대응). */
+.ccc-tabbar .ccc-add,
+.ccc-tabbar-nav {
+  border: none !important;
+  opacity: 1;
+}
+.ccc-tabbar .ccc-add i,
+.ccc-tabbar-nav i {
+  font-size: 1.35em;
+}
+
+/* [Phase 2] 일반 유저에게 보이는 "+" 버튼은 GM과 레이아웃은 동일하되 눌리지 않아야 한다. */
+.ccc-tabbar .ccc-add.ccc-inert {
+  pointer-events: none;
+  cursor: default;
+}
+
+.ccc-manager .ccc-existing-channels > h3,
+.ccc-manager form[data-channel-form] > h3 {
+  font-size: calc(1em + 5px); /* [채널 목록]/[새 채널 만들기] 제목을 본문 폰트보다 5px만 크게 */
+}
+
+.ccc-manager .form-group {
+  margin-bottom: 8px;
+}
+
+.ccc-manager .ccc-player-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-light-tertiary, #999);
+  padding: 4px;
+  margin-bottom: 8px;
+}
+
+.ccc-manager .ccc-player-item {
+  display: block;
+  padding: 2px 0;
+}
+
+.ccc-manager .ccc-channel-list {
+  list-style: none;
+  margin: 0 0 6px 0;
+  padding: 0;
+}
+
+.ccc-manager .ccc-channel-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.ccc-manager .ccc-channel-list li.ccc-editing {
+  background: rgba(255, 255, 0, 0.15);
+}
+
+.ccc-manager .ccc-channel-name {
+  font-weight: bold;
+  flex: 0 0 auto;
+}
+
+.ccc-manager .ccc-channel-count {
+  flex: 1 1 auto;
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
+.ccc-manager .ccc-channel-actions a {
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.ccc-manager .ccc-empty-hint {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* [v0.4.1 추가] 일반 채팅 글자색 설정(messageTextColor, client scope). 값이 없으면 unset으로
+ * 폴백해 시스템/테마 기본 색상을 그대로 둔다. 시스템/테마가 !important로 본문 색을 강제로
+ * 지정하는 경우가 흔해(CoC7 등) 여기도 !important를 함께 걸어야 실제로 override된다 —
+ * 메인탭/채널탭 구분 없이 모든 .chat-message에 적용(탭별로 다르게 줄 이유가 없는 설정).
+ */
+.chat-message .message-content {
+  color: var(--ccc-message-text-color, unset) !important;
+}
+
+/* ── 채널 메시지 외관을 메인탭과 동일하게(whisper 시각 표시 제거) ──────────
+ * JS(chat-log-ui.js의 stripWhisperCosmetics)에서 "whisper" 클래스를 확실히 지우고
+ * ".ccc-channel-message" 클래스를 붙이는 것만으로 whisper 시각 표시 제거는 충분하다.
+ *
+ * 과거에는 여기에 `background: inherit; border-color: inherit;` 라는 폴백 규칙이
+ * 있었으나, dnd5e2 같은 시스템은 카드 자체에 불투명한 배경색을 직접 지정하기 때문에
+ * (whisper 클래스 유무와 무관) 이 inherit 규칙이 그 배경을 부모(리스트 등, 대개 투명)의
+ * 배경으로 덮어써서 채널 메시지 카드가 투명하게 보이는 문제를 일으켰다.
+ * (coc7에서 문제가 없었던 건 이 규칙 덕분이 아니라 JS 클래스 처리만으로 충분했기 때문)
+ * 따라서 이 폴백은 제거한다. 만약 특정 시스템에서 whisper 색상 잔여물이 다시 발견되면,
+ * "background: inherit"처럼 전면 상속시키지 말고, 그 시스템 카드가 실제로 사용하는
+ * whisper 전용 클래스/속성을 :not()으로 걸러내는 식의 국소적인 규칙을 추가할 것.
+ */

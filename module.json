@@ -1,0 +1,23 @@
+{
+  "id": "custom-chat-channels",
+  "title": "Custom Chat Channels",
+  "description": "Custom Theatre System과 연동되는 채팅탭 분리 및 관리 모듈",
+  "version": "0.4.3",
+  "persistentStorage": true,
+  "socket": true,
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "src/main.js"
+  ],
+  "styles": [
+    "src/styles/chat-channels.css"
+  ],
+  "authors": [
+    {
+      "name": "Dgr1s"
+    }
+  ]
+}
